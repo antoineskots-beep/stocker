@@ -41,8 +41,22 @@ export const fr = {
 
   watchlist: {
     title: 'Liste de suivi',
+    add: 'Ajouter',
+    search: 'Rechercher un titre',
     emptyTitle: 'Votre liste est vide',
     emptyBody: 'La recherche et l’ajout de titres arrivent à l’étape suivante. Pour l’instant, votre compte est prêt.',
+  },
+
+  search: {
+    title: 'Recherche',
+    placeholder: 'Symbole ou nom de la société',
+    add: 'Ajouter',
+    added: 'Déjà ajouté',
+    hintTitle: 'Trouvez un titre',
+    hintBody: 'Entrez un symbole (VFV.TO) ou un nom (Shopify).',
+    emptyTitle: 'Aucun résultat',
+    emptyBody: 'Essayez un autre symbole ou le nom de la société.',
+    addFailed: 'Impossible d’ajouter ce titre. Réessayez.',
   },
 
   alerts: {

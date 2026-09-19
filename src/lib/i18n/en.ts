@@ -41,8 +41,22 @@ export const en = {
 
   watchlist: {
     title: 'Watchlist',
+    add: 'Add',
+    search: 'Find a stock',
     emptyTitle: 'Your list is empty',
     emptyBody: 'Search and adding names land in the next milestone. Your account is ready.',
+  },
+
+  search: {
+    title: 'Search',
+    placeholder: 'Symbol or company name',
+    add: 'Add',
+    added: 'Added',
+    hintTitle: 'Look up a stock',
+    hintBody: 'Type a ticker (VFV.TO) or a name (Shopify).',
+    emptyTitle: 'No matches',
+    emptyBody: 'Try another symbol or the company’s name.',
+    addFailed: 'Couldn’t add that name. Please try again.',
   },
 
   alerts: {
