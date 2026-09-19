@@ -1,4 +1,12 @@
-import { Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type PressableProps,
+  type PressableStateCallbackType,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { MinTapTarget, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -27,11 +35,14 @@ export function Button({ label, variant = 'primary', disabled, style, ...rest }:
       accessibilityRole="button"
       accessibilityLabel={label}
       disabled={disabled}
-      style={(state) => [
-        styles.base,
-        { backgroundColor: background, borderColor, opacity: disabled || state.pressed ? 0.7 : 1 },
-        style,
-      ]}
+      style={(state: PressableStateCallbackType) => {
+        const resolvedStyle = typeof style === 'function' ? style(state) : style;
+        return [
+          styles.base,
+          { backgroundColor: background, borderColor, opacity: disabled || state.pressed ? 0.7 : 1 },
+          resolvedStyle,
+        ] as StyleProp<ViewStyle>;
+      }}
       {...rest}>
       <Text style={[styles.label, { color }]}>{label}</Text>
     </Pressable>

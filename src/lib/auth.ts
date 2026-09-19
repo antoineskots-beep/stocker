@@ -60,9 +60,9 @@ export async function signInWithApple() {
 
 export function useGoogleAuthRequest() {
   return Google.useAuthRequest({
-    webClientId: publicEnv.googleWebClientId || undefined,
-    iosClientId: publicEnv.googleIosClientId || undefined,
-    androidClientId: publicEnv.googleAndroidClientId || undefined,
+    webClientId: publicEnv.googleWebClientId || 'not-configured',
+    iosClientId: publicEnv.googleIosClientId || 'not-configured',
+    androidClientId: publicEnv.googleAndroidClientId || 'not-configured',
     scopes: ['openid', 'profile', 'email'],
     redirectUri: AuthSession.makeRedirectUri({ scheme: 'stocker' }),
   });
