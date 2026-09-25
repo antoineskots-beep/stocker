@@ -12,3 +12,14 @@ export function useQuotes(symbols: string[]) {
     queryFn: (): Promise<Quote[]> => marketData.getQuotes(symbols),
   });
 }
+
+export function useQuote(symbol: string | undefined) {
+  const normalized = symbol ? [symbol.toUpperCase()] : [];
+  const quotes = useQuotes(normalized);
+
+  return {
+    ...quotes,
+    data: quotes.data?.[0],
+  };
+}
+

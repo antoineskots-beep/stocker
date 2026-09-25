@@ -68,6 +68,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-localization',
       'expo-apple-authentication',
       'expo-web-browser',
+      'expo-notifications',
     ],
     experiments: {
       typedRoutes: true,

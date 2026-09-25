@@ -14,6 +14,7 @@ type Props = {
   loadingLabel: string;
   retryLabel?: string;
   onRetry?: () => void;
+  emptyAction?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -26,6 +27,7 @@ export function ScreenState({
   loadingLabel,
   retryLabel,
   onRetry,
+  emptyAction,
   children,
 }: Props) {
   const theme = useTheme();
@@ -57,7 +59,7 @@ export function ScreenState({
             {emptyBody}
           </ThemedText>
         ) : null}
-        {children}
+        {emptyAction ?? null}
       </View>
     );
   }

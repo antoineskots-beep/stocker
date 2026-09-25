@@ -1,10 +1,12 @@
-import { useCallback, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { router, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 
+import { BellIcon } from '@/components/bell-icon';
 import { Button } from '@/components/button';
+import { CreateAlertModal } from '@/components/create-alert-modal';
 import { DelayedPricesBanner } from '@/components/delayed-prices-banner';
 import { ExchangeBadge } from '@/components/exchange-badge';
 import { ScreenState } from '@/components/screen-state';
@@ -24,6 +26,13 @@ export default function WatchlistScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  const [alertTargetItem, setAlertTargetItem] = useState<{
+    symbol: string;
+    name?: string | null;
+    price?: number | null;
+    currency?: string | null;
+  } | null>(null);
 
   const watchlist = useWatchlist();
   const items = useMemo(() => watchlist.data ?? [], [watchlist.data]);
@@ -126,6 +135,22 @@ export default function WatchlistScreen() {
               colorUp={theme.primary}
               colorDown={theme.danger}
             />
+            <Pressable
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel={t('alerts.createTitle')}
+              style={styles.bellButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                setAlertTargetItem({
+                  symbol: item.symbol,
+                  name: item.company_name,
+                  price: quote.price,
+                  currency: item.currency,
+                });
+              }}>
+              <BellIcon size={18} color={theme.textSecondary} />
+            </Pressable>
           </View>
         ) : null}
       </Pressable>
@@ -149,26 +174,36 @@ export default function WatchlistScreen() {
         onRetry={() => {
           void watchlist.refetch();
           void quotes.refetch();
-        }}>
-        <Button label={t('watchlist.search')} onPress={() => router.push('/search')} />
+        }}
+        emptyAction={
+          <Button label={t('watchlist.search')} onPress={() => router.push('/search')} />
+        }>
+        {items.length > 0 ? (
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.id}
+            renderItem={renderRow}
+            style={styles.flex}
+            contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl
+                refreshing={watchlist.isFetching || quotes.isFetching}
+                onRefresh={onRefresh}
+                tintColor={theme.primary}
+              />
+            }
+          />
+        ) : null}
       </ScreenState>
 
-      {!isLoading && !errorMessage && items.length > 0 ? (
-        <FlatList
-          data={items}
-          keyExtractor={(item) => item.id}
-          renderItem={renderRow}
-          style={styles.flex}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={watchlist.isFetching || quotes.isFetching}
-              onRefresh={onRefresh}
-              tintColor={theme.primary}
-            />
-          }
-        />
-      ) : null}
+      <CreateAlertModal
+        visible={alertTargetItem != null}
+        symbol={alertTargetItem?.symbol ?? ''}
+        companyName={alertTargetItem?.name}
+        currentPrice={alertTargetItem?.price}
+        currency={alertTargetItem?.currency}
+        onClose={() => setAlertTargetItem(null)}
+      />
     </ThemedView>
   );
 }
@@ -214,5 +249,9 @@ const styles = StyleSheet.create({
   changeRow: {
     flexDirection: 'row',
     gap: Spacing.one,
+  },
+  bellButton: {
+    padding: Spacing.one,
+    marginLeft: Spacing.half,
   },
 });

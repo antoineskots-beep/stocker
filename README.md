@@ -4,14 +4,14 @@ Cross-platform (iOS + Android) app for French-speaking Canadian long-term invest
 
 **Product promise:** *Ne ratez plus jamais votre prix d'entrée.*
 
-## Milestone 1 (current)
+## Milestone 3 (current)
 
-- Expo (React Native) + TypeScript + Expo Router
-- Supabase Auth (email; Apple on iOS; Google when OAuth client IDs are set)
-- Postgres schema with row-level security (`supabase/migrations/0001_init.sql`)
-- Mock market data provider (`src/lib/market-data/`)
-- French + English i18n (defaults to French when the device language is French)
-- Onboarding, sign-in/sign-up, tab shell (Watchlist, Alerts, Settings)
+- Price & buy-zone alert creation UI via bell icon on Watchlist rows (`src/components/create-alert-modal.tsx`)
+- Alerts management tab grouped by Active & Triggered, with pause, resume, reactivate, and delete actions (`src/app/(app)/(tabs)/alerts.tsx`)
+- Push notification permission request, token registration into `push_tokens`, and settings status toggle (`src/lib/notifications.ts`, `src/app/(app)/(tabs)/settings.tsx`)
+- Server-side alert engine as a Supabase Edge Function (`supabase/functions/check-alerts/`) with pure rule evaluation, batch quote processing, and `alert_runs` audit logging
+- Expo push notification dispatch with automatic removal of invalid tokens (`DeviceNotRegistered`)
+- Scheduled evaluation migration documented via `pg_cron` (`supabase/migrations/0002_alerts_cron.sql`)
 
 ## Prerequisites
 
@@ -81,35 +81,54 @@ Optional for social sign-in:
 
 ```
 src/
-  app/              Expo Router screens (auth + main tabs)
-  components/       Shared UI
-  constants/        Theme tokens
+  app/              Expo Router screens (auth, tabs, search, stock detail)
+    (app)/
+      (tabs)/       Watchlist, Alerts, Settings
+      search.tsx    Search & add stocks modal screen
+      stock/
+        [symbol].tsx Stock detail screen
+  components/       Shared UI (Button, BellIcon, CreateAlertModal, ExchangeBadge, Sparkline, ScreenState, etc.)
+  constants/        Theme tokens (Colors, Spacing, Fonts)
   hooks/            Theme / color scheme
   lib/
     auth.ts         Email, Apple, Google sign-in helpers
     features.ts     hasFeature() tier gating map
+    hooks/          TanStack Query hooks (useWatchlist, useAlerts, useQuotes, useEvents, useSearch, etc.)
     i18n/           French + English strings
     market-data/    MarketDataProvider interface + mock
+    notifications.ts Push notification permissions & Expo token registration
     supabase.ts     Supabase client (SecureStore on native)
 supabase/
-  migrations/       SQL schema + RLS policies
+  functions/
+    check-alerts/   Supabase Edge Function (pure evaluator, quotes, push dispatch)
+  migrations/       SQL schema + RLS policies + pg_cron migration
 ```
 
-## Accounts to create (by milestone)
+## Testing the Alert Engine & Push Notifications
 
-| Milestone | Service | Purpose |
-|-----------|---------|---------|
-| 1 | Supabase | Auth, Postgres, RLS |
-| 1 | Google Cloud (optional) | Google sign-in OAuth clients |
-| 1 | Apple Developer (optional) | Sign in with Apple on iOS |
-| 2 | Market data API (your choice) | Delayed quotes for TSX, NEO, US |
-| 3 | Expo (EAS) | Push notification credentials |
-| 4 | RevenueCat | Subscriptions (`premium` entitlement) |
-| 4 | Resend | Transactional email + weekly digest |
+### 1. Triggering an Alert Immediately via Mock Overrides
 
-## Push notifications (Milestone 3)
+You can invoke the `check-alerts` Edge Function locally via the Supabase CLI or directly with `curl`:
 
-Testing push requires a **development build** or **EAS Build** on a **physical device** — Expo Go has limitations for push in SDK 53+. Steps will be documented when the alert engine lands.
+```bash
+# Set a target on a stock in the app (e.g., AAPL with target $230)
+# Then call check-alerts with a price override higher than the target:
+curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/check-alerts' \
+  --header 'Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>' \
+  --header 'Content-Type: application/json' \
+  --data '{"mock_prices": {"AAPL": 240.0}}'
+```
+
+The function will:
+1. Mark the AAPL alert as `status: 'triggered'` in the `alerts` table.
+2. Dispatch a push notification to any tokens in `push_tokens` for that user.
+3. Log the outcome in the `alert_runs` table.
+4. Clean up any invalid push tokens.
+
+### 2. Push Notifications & Expo Go
+
+- Remote push notification token registration (`getExpoPushTokenAsync`) requires a **physical device** and an **EAS development build** (`npx expo run:ios` or `npx expo run:android`).
+- In Expo Go (SDK 51+), remote push registration is safely bypassed to prevent crashes. Local permission checks and alert creation/management remain fully functional.
 
 ## Scripts
 
@@ -118,8 +137,12 @@ Testing push requires a **development build** or **EAS Build** on a **physical d
 | `npm start` | Start Expo dev server |
 | `npm run ios` | Start with iOS simulator |
 | `npm run android` | Start with Android emulator |
+| `npm run web` | Start on Web |
+| `npm run lint` | Run ESLint |
 | `npx tsc --noEmit` | Typecheck |
 
 ## License
 
 See [LICENSE](./LICENSE).
+
+
